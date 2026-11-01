@@ -35,6 +35,15 @@ export async function obtenerOCrearIdentidad(): Promise<IdentidadDispositivo> {
   return { deviceId, publicKey: base64url.encode(clavePublicaDe(base64url.decode(priv))) };
 }
 
+/** Lee deviceId y clave privada para firmar (null si el teléfono no está registrado). */
+export async function obtenerClaveParaFirmar(): Promise<{ deviceId: string; clavePrivada: Uint8Array } | null> {
+  const [deviceId, priv] = await Promise.all([
+    SecureStore.getItemAsync(K.deviceId, opciones),
+    SecureStore.getItemAsync(K.clavePrivada, opciones),
+  ]);
+  return deviceId && priv ? { deviceId, clavePrivada: base64url.decode(priv) } : null;
+}
+
 export const tokenDispositivo = {
   get: () => SecureStore.getItemAsync(K.token, opciones),
   set: (t: string) => SecureStore.setItemAsync(K.token, t, opciones),

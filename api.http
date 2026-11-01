@@ -75,3 +75,16 @@ Authorization: Bearer {{login.response.body.token}}
 Content-Type: application/json
 
 { "motivo": "Teléfono perdido" }
+
+### --- Verificación de identidad (docente/directivo) ----------------------
+
+### Verificar el QR de identidad que muestra la app (pegar el contenido del QR)
+POST {{base}}/verificaciones/identidad
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "qr": "PEGAR_ACA_EL_JWS_DEL_QR" }
+
+### Últimas verificaciones (el docente ve las suyas; el directivo, todas)
+GET {{base}}/verificaciones
+Authorization: Bearer {{login.response.body.token}}

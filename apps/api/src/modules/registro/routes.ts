@@ -9,6 +9,7 @@ import {
 } from '@presente/shared';
 import { identityProvider } from '../../identity';
 import { auditar } from '../../lib/audit';
+import { clock } from '../../lib/clock';
 import { HttpError, parse } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { firmarToken } from '../../lib/tokens';
@@ -122,7 +123,11 @@ registroRouter.get('/yo', authDevice({ permitirNoActivo: true }), async (req, re
     situacion = solicitud ? 'CAMBIO_PENDIENTE' : 'EN_REVISION';
   }
 
+  const institucion = await prisma.institucion.findFirst();
   const perfil: PerfilEstudiante = {
+    usuarioId: usuario.id,
+    institucion: institucion?.nombre ?? '',
+    ahoraServidor: clock.now().toISOString(),
     nombre: usuario.nombre,
     apellido: usuario.apellido,
     dni: estudiante.dni,

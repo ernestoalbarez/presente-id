@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Especificación completa: @docs/PROMPT.md
 
 ## Estado
-- Etapa actual: 2 terminada (registro + mock RENAPER + vinculación de dispositivo en la app). Esperando confirmación para la etapa 3.
+- Etapa actual: 3 terminada (QR de identidad dinámico + verificación desde el backoffice). Esperando confirmación para la etapa 4.
 
 ## Comandos
 - `pnpm install && pnpm db:seed && pnpm dev`: API en :3000, backoffice en :5173, Metro en :8081.
@@ -25,6 +25,7 @@ Especificación completa: @docs/PROMPT.md
 - El backoffice llama a la API vía el proxy `/api` de Vite (sin CORS ni URL configurable).
 - Auth de la app: `authDevice` (`apps/api/src/middleware/authDevice.ts`) verifica el token del dispositivo y que el `Dispositivo` siga ACTIVO en la base en cada request. La regla de un solo dispositivo activo vive en `vincularDispositivo` (`modules/dispositivos/service.ts`).
 - Identidad: la API depende solo de `IdentityProvider`; el mock está en `apps/api/src/identity/`.
+- Firmas del teléfono: JWS EdDSA hecho a mano sobre noble en `packages/shared/src/crypto/jws.ts` (compatible con `jose`). El QR de identidad lo firma el teléfono (`shared/src/qr.ts`) y lo valida `verificarQrIdentidad` (`apps/api/src/modules/verificaciones/qrIdentidad.ts`), una función pura con dependencias inyectadas para poder testearla sin base. Antirreplay en `lib/nonces.ts`.
 - Mobile: sin librería de navegación; `apps/mobile/src/App.tsx` es una máquina de estados guiada por `GET /yo` (`situacion`). La clave privada del dispositivo vive en SecureStore (`src/lib/dispositivo.ts`).
 
 ## Reglas de trabajo

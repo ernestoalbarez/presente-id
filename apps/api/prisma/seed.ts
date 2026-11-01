@@ -56,7 +56,7 @@ export async function seed(prisma: PrismaClient, ahora = new Date()) {
   const passwordHash = await bcrypt.hash(PASSWORD_DEMO, 10);
 
   // --- Institución, sedes y puertas -------------------------------------------------
-  const institucion = await prisma.institucion.create({ data: { nombre: 'Instituto Universitario del Sur' } });
+  const institucion = await prisma.institucion.create({ data: { nombre: 'IFTS 11' } });
   const centro = await prisma.sede.create({
     data: { institucionId: institucion.id, nombre: 'Sede Centro', direccion: 'Av. Rivadavia 1234, CABA' },
   });

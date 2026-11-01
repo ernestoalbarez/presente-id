@@ -5,3 +5,6 @@ export * from './constants';
 export * from './schemas/auth';
 export * from './schemas/registro';
 export * from './crypto/ed25519';
+export * from './crypto/jws';
+export * from './qr';
+export * from './schemas/verificaciones';

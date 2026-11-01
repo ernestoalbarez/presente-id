@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DispositivosPage } from './pages/DispositivosPage';
 import { ValidacionesPage } from './pages/ValidacionesPage';
+import { VerificarIdentidadPage } from './pages/VerificarIdentidadPage';
 
 export function App() {
   const { usuario, cargando } = useAuth();
@@ -23,6 +24,7 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/verificar" element={<VerificarIdentidadPage />} />
         {usuario.rol === 'DIRECTIVO' && (
           <>
             <Route path="/dispositivos" element={<DispositivosPage />} />

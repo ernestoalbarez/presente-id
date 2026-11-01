@@ -7,6 +7,7 @@ import { authRouter } from './modules/auth/routes';
 import { dispositivosRouter } from './modules/dispositivos/routes';
 import { registroRouter } from './modules/registro/routes';
 import { validacionesRouter } from './modules/validaciones/routes';
+import { verificacionesRouter } from './modules/verificaciones/routes';
 
 export function createApp() {
   const app = express();
@@ -20,6 +21,7 @@ export function createApp() {
   app.use('/', registroRouter); // POST /registro y GET /yo (app móvil)
   app.use('/validaciones', validacionesRouter);
   app.use('/dispositivos', dispositivosRouter);
+  app.use('/verificaciones', verificacionesRouter);
 
   app.use((_req, _res, next) => next(new HttpError(404, 'Ruta inexistente', 'NO_ENCONTRADO')));
   app.use(errorHandler);

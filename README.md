@@ -2,7 +2,7 @@
 
 Prototipo para un trabajo práctico universitario: una app de identidad y presentismo estudiantil inspirada en POAP. El teléfono del estudiante funciona como credencial: valida su identidad (contra un mock de RENAPER), muestra un QR de identidad dinámico y escanea QRs para dar presente en el aula o registrar el ingreso a la sede. Cada presente válido genera una constancia firmada por el servidor (sin blockchain). Todos los servicios externos están mockeados.
 
-> Estado: **etapa 2** (registro, mock RENAPER y vinculación de dispositivo). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
+> Estado: **etapa 3** (QR de identidad dinámico y verificación desde el backoffice). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
 
 ## Arquitectura
 
@@ -95,4 +95,10 @@ Hay además 8 estudiantes ya validados, con dispositivo vinculado e historial de
 - **Revisión manual:** el teléfono queda `PENDIENTE` hasta que un directivo resuelve, y la app consulta `GET /yo` cada 3 s.
 - **Biometría:** `expo-local-authentication`, con el PIN del teléfono como alternativa. Si el teléfono no tiene ningún bloqueo configurado, se avisa y se deja pasar (decisión de prototipo). La credencial se vuelve a bloquear al pasar la app a segundo plano.
 - **Navegación de la app sin librería:** una máquina de estados en `App.tsx` decide la pantalla según el token local y la respuesta de `GET /yo`. Reemplaza a `expo-router`, que habíamos propuesto originalmente, porque es más simple de explicar y no necesita configuración.
+- **QR de identidad firmado por el teléfono, no por el servidor:** es un JWS EdDSA estándar (`typ: presente-id+jws`) con `{sub, did, iat, exp, nonce}`, firmado con la clave privada del dispositivo. Se genera sin conexión, y verificarlo prueba a la vez la identidad y que salió del teléfono vinculado. La implementación usa `@noble/ed25519` en `packages/shared`, igual en la app y en la API, y es compatible con `jose` (hay un test que lo comprueba).
+- **Vigencia del QR de identidad:** rota cada 30 s. El servidor acepta 5 s extra por la demora del escaneo y rechaza QRs con `exp − iat > 30` o con `iat` en el futuro, para que un teléfono no pueda autoemitirse un QR "eterno".
+- **Reloj del teléfono sincronizado:** cada `GET /yo` trae la hora del servidor y la app firma con esa hora corregida. Así un teléfono atrasado no genera QRs que ya nacen vencidos.
+- **Nonce de un solo uso:** cada nonce se guarda en `NonceUsado` hasta que su QR vence. Si el mismo QR se escanea dos veces (por ejemplo, reenviado por WhatsApp), el segundo escaneo da `INVALIDO`.
+- **Qué muestra cada resultado:** si la firma es auténtica, el backoffice muestra los datos del estudiante incluso con `VENCIDO` o `DISPOSITIVO_REVOCADO`, porque se sabe de quién es el QR. Con `INVALIDO` por firma o formato no muestra ningún dato. Todas las verificaciones quedan registradas, también las fallidas.
+- **Verificación manual en el backoffice:** además de la cámara, se puede pegar el contenido del QR, para equipos sin webcam o para probar con `api.http`.
 - **Tests:** dos proyectos de Vitest en la API. `unit` (`*.unit.test.ts`) no usa base de datos; `integration` resetea `test.db` y carga el seed.

@@ -8,6 +8,7 @@ import type { PerfilEstudiante } from '@presente/shared';
 import { Boton, Estado } from './components/ui';
 import { api, ApiError } from './lib/api';
 import { desvincularLocalmente, tokenDispositivo } from './lib/dispositivo';
+import { sincronizarConServidor } from './lib/reloj';
 import { usePolling } from './lib/usePolling';
 import { Bloqueo } from './screens/Bloqueo';
 import { Inicio } from './screens/Inicio';
@@ -31,6 +32,7 @@ export function App() {
     if (!(await tokenDispositivo.get())) return setVista({ tipo: 'registro' });
     try {
       const perfil = await api<PerfilEstudiante>('/yo');
+      sincronizarConServidor(perfil.ahoraServidor);
       const actual = vistaRef.current;
       if (perfil.situacion === 'ACTIVO') {
         // Si ya estaba desbloqueada, se queda en inicio; si no, pide biometría.

@@ -32,6 +32,10 @@ export interface RegistroResponse {
 export type SituacionDispositivo = 'ACTIVO' | 'EN_REVISION' | 'CAMBIO_PENDIENTE' | 'RECHAZADO' | 'REVOCADO';
 
 export interface PerfilEstudiante {
+  usuarioId: string;
+  institucion: string;
+  /** Hora del servidor (ISO): la app la usa para corregir el reloj del teléfono al firmar QRs. */
+  ahoraServidor: string;
   nombre: string;
   apellido: string;
   dni: string;
