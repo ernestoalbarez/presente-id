@@ -7,13 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Especificación completa: @docs/PROMPT.md
 
 ## Estado
-- Etapa actual: 3 terminada (QR de identidad dinámico + verificación desde el backoffice). Esperando confirmación para la etapa 4.
+- Etapa actual: 4 terminada (sesiones + QR de asistencia + presente desde la app). Esperando confirmación para la etapa 5.
 
 ## Comandos
 - `pnpm install && pnpm db:seed && pnpm dev`: API en :3000, backoffice en :5173, Metro en :8081.
 - `pnpm test` / `pnpm typecheck`. Un solo test: `pnpm --filter @presente/api test -- <patrón>`.
 - `pnpm keys:generate`: regenera el par Ed25519 del servidor en `apps/api/.env`.
-- Los tests de la API usan `apps/api/prisma/test.db` y claves efímeras (ver `apps/api/vitest.config.ts`). Los `*.unit.test.ts` no tocan la base: `pnpm --filter @presente/api exec vitest run --project unit`.
+- Los tests de la API usan `apps/api/prisma/test.db` y claves efímeras (ver `apps/api/vitest.config.ts`). Los `*.unit.test.ts` no tocan la base: `pnpm --filter @presente/api exec vitest run --project unit`. Las suites de integración comparten una base seedeada una sola vez, así que cada suite tiene que usar DNIs distintos (ver `src/test/helpers.ts`).
 - App: `pnpm dev:mobile` (Expo Go, SDK 58). Para verificar que Metro bundlea sin un celular: `cd apps/mobile && CI=1 npx expo export --platform ios --output-dir /tmp/x`.
 - `pnpm db:seed` y el setup de tests usan `prisma db push --force-reset`, que Prisma bloquea cuando lo corre un agente: pedile al usuario que los ejecute.
 
@@ -26,6 +26,7 @@ Especificación completa: @docs/PROMPT.md
 - Auth de la app: `authDevice` (`apps/api/src/middleware/authDevice.ts`) verifica el token del dispositivo y que el `Dispositivo` siga ACTIVO en la base en cada request. La regla de un solo dispositivo activo vive en `vincularDispositivo` (`modules/dispositivos/service.ts`).
 - Identidad: la API depende solo de `IdentityProvider`; el mock está en `apps/api/src/identity/`.
 - Firmas del teléfono: JWS EdDSA hecho a mano sobre noble en `packages/shared/src/crypto/jws.ts` (compatible con `jose`). El QR de identidad lo firma el teléfono (`shared/src/qr.ts`) y lo valida `verificarQrIdentidad` (`apps/api/src/modules/verificaciones/qrIdentidad.ts`), una función pura con dependencias inyectadas para poder testearla sin base. Antirreplay en `lib/nonces.ts`.
+- Presente: el QR del aula es un token del servidor; la app lo envuelve en un JWS firmado por el teléfono (`firmarEscaneo`), que valida `verificarEscaneoFirmado` (`lib/escaneoFirmado.ts`, reutilizable para el ingreso a sede). Las reglas de horario están en `modules/sesiones/reglas.ts`. La app enruta cada QR según el `typ` del header (`apps/mobile/src/lib/escaneo.ts`).
 - Mobile: sin librería de navegación; `apps/mobile/src/App.tsx` es una máquina de estados guiada por `GET /yo` (`situacion`). La clave privada del dispositivo vive en SecureStore (`src/lib/dispositivo.ts`).
 
 ## Reglas de trabajo

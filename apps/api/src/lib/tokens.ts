@@ -3,11 +3,13 @@
 // asistencia, de puerta y las constancias. El header `typ` distingue el uso de cada token
 // para que uno no pueda presentarse en lugar de otro.
 import { SignJWT, jwtVerify, importJWK, type JWTPayload, type CryptoKey } from 'jose';
+import { TYP_QR_ASISTENCIA, TYP_QR_PUERTA } from '@presente/shared';
 import { config } from '../config';
 import { clock } from './clock';
 
-// staff: sesión del backoffice · dispositivo: sesión del teléfono vinculado de un estudiante.
-export type TipoToken = 'staff' | 'dispositivo';
+// staff: sesión del backoffice · dispositivo: sesión del teléfono vinculado de un estudiante ·
+// TYP_QR_ASISTENCIA / TYP_QR_PUERTA: contenido de los QR que genera el servidor.
+export type TipoToken = 'staff' | 'dispositivo' | typeof TYP_QR_ASISTENCIA | typeof TYP_QR_PUERTA;
 
 let claves: Promise<{ privada: CryptoKey; publica: CryptoKey }> | undefined;
 

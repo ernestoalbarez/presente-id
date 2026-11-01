@@ -11,7 +11,7 @@ import { desvincularLocalmente, tokenDispositivo } from './lib/dispositivo';
 import { sincronizarConServidor } from './lib/reloj';
 import { usePolling } from './lib/usePolling';
 import { Bloqueo } from './screens/Bloqueo';
-import { Inicio } from './screens/Inicio';
+import { Principal } from './screens/Principal';
 import { RegistroFlujo } from './screens/RegistroFlujo';
 
 type Vista =
@@ -135,6 +135,6 @@ function Contenido({
     case 'bloqueado':
       return <Bloqueo onDesbloqueado={() => setVista({ tipo: 'inicio', perfil: vista.perfil })} />;
     case 'inicio':
-      return <Inicio perfil={vista.perfil} onDesvincular={desvincular} />;
+      return <Principal perfil={vista.perfil} onDesvincular={desvincular} />;
   }
 }

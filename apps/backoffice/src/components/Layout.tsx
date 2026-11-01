@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 // Menú por rol. Las pantallas sin `to` se habilitan en las etapas siguientes.
 const MENU: Array<{ label: string; to?: string; roles: RolStaff[] }> = [
   { label: 'Dashboard', to: '/', roles: ['DOCENTE', 'DIRECTIVO'] },
-  { label: 'Cursos', roles: ['DOCENTE', 'DIRECTIVO'] },
+  { label: 'Cursos', to: '/cursos', roles: ['DOCENTE', 'DIRECTIVO'] },
   { label: 'Verificar identidad', to: '/verificar', roles: ['DOCENTE', 'DIRECTIVO'] },
   { label: 'Asistencia', roles: ['DOCENTE', 'DIRECTIVO'] },
   { label: 'Ingresos', roles: ['DIRECTIVO'] },
@@ -28,7 +28,7 @@ export function Layout() {
               <NavLink
                 key={m.label}
                 to={m.to}
-                end
+                end={m.to === '/'}
                 className={({ isActive }) =>
                   `block rounded-md px-3 py-2 text-sm ${isActive ? 'bg-indigo-50 font-medium text-indigo-700' : 'text-slate-700 hover:bg-slate-100'}`
                 }

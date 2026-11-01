@@ -3,9 +3,12 @@ import cors from 'cors';
 import { config } from './config';
 import { clock } from './lib/clock';
 import { errorHandler, HttpError } from './lib/errors';
+import { asistenciasRouter } from './modules/asistencias/routes';
 import { authRouter } from './modules/auth/routes';
+import { cursosRouter } from './modules/cursos/routes';
 import { dispositivosRouter } from './modules/dispositivos/routes';
 import { registroRouter } from './modules/registro/routes';
+import { sesionesRouter } from './modules/sesiones/routes';
 import { validacionesRouter } from './modules/validaciones/routes';
 import { verificacionesRouter } from './modules/verificaciones/routes';
 
@@ -22,6 +25,9 @@ export function createApp() {
   app.use('/validaciones', validacionesRouter);
   app.use('/dispositivos', dispositivosRouter);
   app.use('/verificaciones', verificacionesRouter);
+  app.use('/cursos', cursosRouter);
+  app.use('/sesiones', sesionesRouter);
+  app.use('/asistencias', asistenciasRouter);
 
   app.use((_req, _res, next) => next(new HttpError(404, 'Ruta inexistente', 'NO_ENCONTRADO')));
   app.use(errorHandler);

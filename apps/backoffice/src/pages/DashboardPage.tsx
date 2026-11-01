@@ -1,15 +1,23 @@
+import type { SesionResumen } from '@presente/shared';
+import { usePolling } from '../api/usePolling';
 import { useAuth } from '../auth/AuthContext';
+import { ListaSesiones } from '../components/ListaSesiones';
+import { Tarjeta, Titulo, Vacio } from '../components/ui';
 
-// Placeholder de la etapa 1: el dashboard con datos reales llega en la etapa 5.
+// Por ahora muestra las sesiones de hoy; los indicadores (% de asistencia, ingresos) llegan en la etapa 5.
 export function DashboardPage() {
   const { usuario } = useAuth();
+  const { data } = usePolling<SesionResumen[]>('/sesiones');
   return (
     <div>
-      <h1 className="text-2xl font-bold">Hola, {usuario?.nombre}</h1>
-      <p className="mt-2 text-slate-600">
-        Sesión iniciada como <strong>{usuario?.rol === 'DIRECTIVO' ? 'directivo' : 'docente'}</strong>. El dashboard con
-        sesiones de hoy, % de asistencia e ingresos se completa en la etapa 5.
-      </p>
+      <Titulo sub={new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}>Hola, {usuario?.nombre}</Titulo>
+      <h2 className="mb-3 text-lg font-semibold">Sesiones de hoy</h2>
+      {data?.length === 0 && <Vacio>No hay sesiones hoy.</Vacio>}
+      {!!data?.length && (
+        <Tarjeta className="overflow-x-auto p-0">
+          <ListaSesiones sesiones={data} />
+        </Tarjeta>
+      )}
     </div>
   );
 }

@@ -88,3 +88,54 @@ Content-Type: application/json
 ### Últimas verificaciones (el docente ve las suyas; el directivo, todas)
 GET {{base}}/verificaciones
 Authorization: Bearer {{login.response.body.token}}
+
+### --- Cursos y sesiones (docente/directivo) ------------------------------
+
+### Cursos visibles (docente: los suyos; directivo: todos)
+GET {{base}}/cursos
+Authorization: Bearer {{login.response.body.token}}
+
+### Sesiones de hoy (o ?fecha=YYYY-MM-DD)
+# @name sesiones
+GET {{base}}/sesiones
+Authorization: Bearer {{login.response.body.token}}
+
+### Detalle de una sesión con la lista de presentes
+GET {{base}}/sesiones/{{sesiones.response.body.0.id}}
+Authorization: Bearer {{login.response.body.token}}
+
+### Crear sesión en un curso (reemplazar el id)
+POST {{base}}/cursos/ID_CURSO/sesiones
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "tipo": "CLASE", "inicio": "2026-11-03T18:30:00-03:00", "fin": "2026-11-03T22:00:00-03:00", "aula": "Aula 12", "toleranciaMin": 15 }
+
+### Abrir / cerrar sesión
+POST {{base}}/sesiones/{{sesiones.response.body.0.id}}/abrir
+Authorization: Bearer {{login.response.body.token}}
+
+### QR de asistencia vigente (rota cada 15 s)
+GET {{base}}/sesiones/{{sesiones.response.body.0.id}}/qr
+Authorization: Bearer {{login.response.body.token}}
+
+### Corrección manual (queda auditada)
+PUT {{base}}/sesiones/{{sesiones.response.body.0.id}}/asistencias/ID_ESTUDIANTE
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "presente": true, "motivo": "Presente sin celular" }
+
+### Verificación cruzada en un examen
+POST {{base}}/verificaciones/identidad
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "qr": "PEGAR_ACA_EL_JWS_DEL_QR_DE_IDENTIDAD", "sesionId": "ID_SESION_EXAMEN" }
+
+### Presente desde la app: el body es un JWS firmado por el teléfono (lo arma la app; ver firmarEscaneo en packages/shared)
+POST {{base}}/asistencias/escaneo
+Authorization: Bearer {{registro.response.body.deviceToken}}
+Content-Type: application/json
+
+{ "jws": "JWS_FIRMADO_POR_EL_TELEFONO" }

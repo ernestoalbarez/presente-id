@@ -2,8 +2,11 @@ import { Navigate, Route, Routes } from 'react-router';
 import { useAuth } from './auth/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { CursoDetallePage } from './pages/CursoDetallePage';
+import { CursosPage } from './pages/CursosPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DispositivosPage } from './pages/DispositivosPage';
+import { SesionEnVivoPage } from './pages/SesionEnVivoPage';
 import { ValidacionesPage } from './pages/ValidacionesPage';
 import { VerificarIdentidadPage } from './pages/VerificarIdentidadPage';
 
@@ -25,6 +28,9 @@ export function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/verificar" element={<VerificarIdentidadPage />} />
+        <Route path="/cursos" element={<CursosPage />} />
+        <Route path="/cursos/:id" element={<CursoDetallePage />} />
+        <Route path="/sesiones/:id" element={<SesionEnVivoPage />} />
         {usuario.rol === 'DIRECTIVO' && (
           <>
             <Route path="/dispositivos" element={<DispositivosPage />} />

@@ -40,3 +40,16 @@ export function Boton({
 
 export const fechaHora = (iso: string) =>
   new Date(iso).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+export const hora = (iso: string) => new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+export const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+const ESTADO_SESION = {
+  PROGRAMADA: 'bg-slate-100 text-slate-700',
+  ABIERTA: 'bg-green-100 text-green-800',
+  CERRADA: 'bg-slate-800 text-white',
+} as const;
+
+export const BadgeEstado = ({ estado }: { estado: keyof typeof ESTADO_SESION }) => (
+  <span className={`rounded px-2 py-0.5 text-xs font-semibold ${ESTADO_SESION[estado]}`}>{estado}</span>
+);

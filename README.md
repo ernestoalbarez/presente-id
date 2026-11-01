@@ -2,7 +2,7 @@
 
 Prototipo para un trabajo práctico universitario: una app de identidad y presentismo estudiantil inspirada en POAP. El teléfono del estudiante funciona como credencial: valida su identidad (contra un mock de RENAPER), muestra un QR de identidad dinámico y escanea QRs para dar presente en el aula o registrar el ingreso a la sede. Cada presente válido genera una constancia firmada por el servidor (sin blockchain). Todos los servicios externos están mockeados.
 
-> Estado: **etapa 3** (QR de identidad dinámico y verificación desde el backoffice). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
+> Estado: **etapa 4** (sesiones, QR de asistencia y presente desde la app). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
 
 ## Arquitectura
 
@@ -101,4 +101,11 @@ Hay además 8 estudiantes ya validados, con dispositivo vinculado e historial de
 - **Nonce de un solo uso:** cada nonce se guarda en `NonceUsado` hasta que su QR vence. Si el mismo QR se escanea dos veces (por ejemplo, reenviado por WhatsApp), el segundo escaneo da `INVALIDO`.
 - **Qué muestra cada resultado:** si la firma es auténtica, el backoffice muestra los datos del estudiante incluso con `VENCIDO` o `DISPOSITIVO_REVOCADO`, porque se sabe de quién es el QR. Con `INVALIDO` por firma o formato no muestra ningún dato. Todas las verificaciones quedan registradas, también las fallidas.
 - **Verificación manual en el backoffice:** además de la cámara, se puede pegar el contenido del QR, para equipos sin webcam o para probar con `api.http`.
+- **QR de asistencia firmado por el servidor:** es un JWT EdDSA (`typ: presente-asistencia+jwt`) con el `sid` de la sesión. El backoffice pide uno nuevo cada 15 s, pero cada token vale 30 s, así que se acepta el QR actual y el anterior y nadie queda afuera por escanear justo en la rotación.
+- **El presente lo firma el teléfono:** la app no manda el token del QR suelto, lo envuelve en un JWS (`typ: presente-escaneo+jws`) con `{qr, did, ts, nonce}` firmado con la clave del dispositivo. Así un token copiado del proyector y enviado desde otro lado no sirve. El servidor exige `|ts − ahora| ≤ 30 s` y un nonce sin usar.
+- **Orden de validación del presente:** firma del dispositivo, nonce, token del QR (vigente y de asistencia), sesión abierta y en horario, inscripción y, por último, sin duplicado (`@@unique(estudianteId, sesionId)`). Cada falla devuelve un `codigo` distinto (`QR_VENCIDO`, `SESION_CERRADA`, `NO_INSCRIPTO_CURSO`, `YA_PRESENTE`…) que la app muestra.
+- **Ventana de la sesión:** un presente por QR es válido si el docente abrió la sesión, no la cerró y `ahora ∈ [inicio − tolerancia, fin]`. Abrir y cerrar son acciones explícitas, y una sesión cerrada se puede reabrir.
+- **Exámenes:** el estudiante da presente con el QR del aula, y el docente escanea su credencial desde "Sesión en vivo" para marcar el presente como verificado presencialmente. Si el estudiante no dio presente, la verificación lo informa pero no lo crea. Los exámenes exigen esta verificación por defecto.
+- **Correcciones manuales:** marcar o anular un presente exige un motivo y queda en `Auditoria` con el estado anterior. Anular hoy borra la asistencia; en la etapa 5, cuando existan las constancias, la constancia va a quedar revocada.
+- **La app decide a dónde mandar cada QR leyendo el `typ` del header**, sin verificarlo: la verificación siempre la hace el servidor.
 - **Tests:** dos proyectos de Vitest en la API. `unit` (`*.unit.test.ts`) no usa base de datos; `integration` resetea `test.db` y carga el seed.

@@ -8,3 +8,4 @@ export * from './crypto/ed25519';
 export * from './crypto/jws';
 export * from './qr';
 export * from './schemas/verificaciones';
+export * from './schemas/sesiones';
