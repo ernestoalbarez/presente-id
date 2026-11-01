@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Especificación completa: @docs/PROMPT.md
 
 ## Estado
-- Etapa actual: 4 terminada (sesiones + QR de asistencia + presente desde la app). Esperando confirmación para la etapa 5.
+- Etapa actual: 5 terminada (ingreso a sede + constancias + reportes). Esperando confirmación para la etapa 6.
 
 ## Comandos
 - `pnpm install && pnpm db:seed && pnpm dev`: API en :3000, backoffice en :5173, Metro en :8081.
@@ -27,6 +27,9 @@ Especificación completa: @docs/PROMPT.md
 - Identidad: la API depende solo de `IdentityProvider`; el mock está en `apps/api/src/identity/`.
 - Firmas del teléfono: JWS EdDSA hecho a mano sobre noble en `packages/shared/src/crypto/jws.ts` (compatible con `jose`). El QR de identidad lo firma el teléfono (`shared/src/qr.ts`) y lo valida `verificarQrIdentidad` (`apps/api/src/modules/verificaciones/qrIdentidad.ts`), una función pura con dependencias inyectadas para poder testearla sin base. Antirreplay en `lib/nonces.ts`.
 - Presente: el QR del aula es un token del servidor; la app lo envuelve en un JWS firmado por el teléfono (`firmarEscaneo`), que valida `verificarEscaneoFirmado` (`lib/escaneoFirmado.ts`, reutilizable para el ingreso a sede). Las reglas de horario están en `modules/sesiones/reglas.ts`. La app enruta cada QR según el `typ` del header (`apps/mobile/src/lib/escaneo.ts`).
+- Constancias: `modules/constancias/service.ts`. Toda asistencia nueva (QR o manual, también en el seed) tiene que pasar por `emitirConstancia` dentro de la misma transacción, y al anular se usa `revocarConstanciaDe` (no se borran).
+- Routers montados en `/` (`registroRouter`, `puertasRouter`) no pueden usar `router.use(auth)`: aplicaría a cualquier URL. La auth va por ruta.
+- Backoffice: `/verificar/:codigo` es pública y se resuelve antes del login (`App.tsx`).
 - Mobile: sin librería de navegación; `apps/mobile/src/App.tsx` es una máquina de estados guiada por `GET /yo` (`situacion`). La clave privada del dispositivo vive en SecureStore (`src/lib/dispositivo.ts`).
 
 ## Reglas de trabajo

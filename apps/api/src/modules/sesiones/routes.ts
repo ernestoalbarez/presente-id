@@ -6,6 +6,7 @@ import { HttpError, parse } from '../../lib/errors';
 import { prisma } from '../../lib/prisma';
 import { firmarToken } from '../../lib/tokens';
 import { authStaff } from '../../middleware/authStaff';
+import { emitirConstancia, revocarConstanciaDe } from '../constancias/service';
 import { cursosVisibles, detalleSesion, listarSesiones, rangoDelDia, sesionConAcceso } from './service';
 
 export const sesionesRouter = Router();
@@ -60,11 +61,18 @@ sesionesRouter.put('/:id/asistencias/:estudianteId', async (req, res) => {
 
   const actual = await prisma.asistencia.findUnique({ where: { estudianteId_sesionId: { estudianteId, sesionId: sesion.id } } });
   if (presente && !actual) {
-    await prisma.asistencia.create({
-      data: { estudianteId, sesionId: sesion.id, metodo: 'MANUAL', registradaPorId: req.staff!.id, timestamp: clock.now() },
+    await prisma.$transaction(async (tx) => {
+      const a = await tx.asistencia.create({
+        data: { estudianteId, sesionId: sesion.id, metodo: 'MANUAL', registradaPorId: req.staff!.id, timestamp: clock.now() },
+      });
+      await emitirConstancia(tx, a.id);
     });
   } else if (!presente && actual) {
-    await prisma.asistencia.delete({ where: { id: actual.id } });
+    // La constancia no se borra: queda revocada y desvinculada de la asistencia eliminada.
+    await prisma.$transaction(async (tx) => {
+      await revocarConstanciaDe(tx, actual.id);
+      await tx.asistencia.delete({ where: { id: actual.id } });
+    });
   }
   if (presente !== !!actual) {
     await auditar({

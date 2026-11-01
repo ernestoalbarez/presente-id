@@ -2,7 +2,7 @@
 // La misma clave firma tokens de sesión del backoffice y, en etapas siguientes, los QR de
 // asistencia, de puerta y las constancias. El header `typ` distingue el uso de cada token
 // para que uno no pueda presentarse en lugar de otro.
-import { SignJWT, jwtVerify, importJWK, type JWTPayload, type CryptoKey } from 'jose';
+import { CompactSign, compactVerify, SignJWT, jwtVerify, importJWK, type JWTPayload, type CryptoKey } from 'jose';
 import { TYP_QR_ASISTENCIA, TYP_QR_PUERTA } from '@presente/shared';
 import { config } from '../config';
 import { clock } from './clock';
@@ -41,3 +41,18 @@ export async function verificarToken<T extends JWTPayload>(typ: TipoToken, token
   });
   return payload;
 }
+
+/** Firma un documento arbitrario (bytes) como JWS compacto. Lo usan las constancias. */
+export async function firmarDocumento(typ: string, contenido: string): Promise<string> {
+  return new CompactSign(new TextEncoder().encode(contenido)).setProtectedHeader({ alg: 'EdDSA', typ }).sign((await getClaves()).privada);
+}
+
+/** Verifica un JWS de documento y devuelve el contenido firmado. Lanza si la firma no es válida. */
+export async function verificarDocumento(typ: string, jws: string): Promise<string> {
+  const { payload, protectedHeader } = await compactVerify(jws, (await getClaves()).publica, { algorithms: ['EdDSA'] });
+  if (protectedHeader.typ !== typ) throw new Error('Tipo de documento inesperado');
+  return new TextDecoder().decode(payload);
+}
+
+/** Clave pública del servidor (JWK) para que cualquiera pueda verificar firmas por su cuenta. */
+export const clavePublicaServidor = () => ({ kty: 'OKP', crv: 'Ed25519', x: config.serverKey.x, alg: 'EdDSA', use: 'sig' });

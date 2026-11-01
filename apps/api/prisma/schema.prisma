@@ -77,6 +77,7 @@ model Estudiante {
   asistencias    Asistencia[]
   ingresos       EventoIngreso[]
   verificaciones VerificacionIdentidad[]
+  constancias    Constancia[]
 }
 
 /// Padrón ficticio del mock de RENAPER (personas del "registro nacional").
@@ -210,16 +211,20 @@ model EventoIngreso {
 }
 
 /// Constancia de presencia (inspirada en POAP), firmada por el servidor.
+/// Si un docente anula el presente, la asistencia se borra pero la constancia queda REVOCADA
+/// (asistenciaId pasa a null): el link público sigue existiendo y muestra que fue revocada.
 model Constancia {
-  id           String     @id @default(cuid())
-  asistenciaId String     @unique
-  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id])
-  codigo       String     @unique // código público corto para el link de verificación
-  payload      String // JSON canónico de lo que se firmó
-  hash         String // SHA-256 del payload
-  firma        String // firma Ed25519 del servidor sobre el payload
-  emitidaAt    DateTime   @default(now())
-  revocada     Boolean    @default(false)
+  id           String      @id @default(cuid())
+  asistenciaId String?     @unique
+  asistencia   Asistencia? @relation(fields: [asistenciaId], references: [id], onDelete: SetNull)
+  estudianteId String
+  estudiante   Estudiante  @relation(fields: [estudianteId], references: [id])
+  codigo       String      @unique // código público corto para el link de verificación
+  payload      String // JSON de lo que se firmó (datos públicos, sin DNI)
+  hash         String // SHA-256 (hex) del payload
+  firma        String // JWS compacto EdDSA del servidor sobre el payload
+  emitidaAt    DateTime    @default(now())
+  revocada     Boolean     @default(false)
 }
 
 /// Registro de cada escaneo de QR de identidad hecho desde el backoffice.

@@ -6,52 +6,17 @@ import { QRCodeSVG } from 'qrcode.react';
 import type { AsistenciaItem, QrAsistenciaResponse, SesionDetalle, VerificacionIdentidadResponse } from '@presente/shared';
 import { api } from '../api/client';
 import { usePolling } from '../api/usePolling';
+import { useQrRotativo } from '../api/useQrRotativo';
 import { EscanerQr } from '../components/EscanerQr';
 import { ResultadoVerificacionCard } from '../components/ResultadoVerificacion';
 import { BadgeEstado, Boton, hora, Tarjeta, Titulo } from '../components/ui';
-
-/** Pide un QR nuevo al servidor cada `rotaEnSeg` segundos mientras la sesión está abierta. */
-function useQrRotativo(sesionId: string, activo: boolean) {
-  const [qr, setQr] = useState<string | null>(null);
-  const [restante, setRestante] = useState(0);
-
-  useEffect(() => {
-    if (!activo) {
-      setQr(null);
-      return;
-    }
-    let vence = 0;
-    let cancelado = false;
-    const pedir = async () => {
-      try {
-        const r = await api<QrAsistenciaResponse>(`/sesiones/${sesionId}/qr`);
-        if (cancelado) return;
-        setQr(r.qr);
-        vence = Date.now() + r.rotaEnSeg * 1000;
-      } catch {
-        vence = Date.now() + 3000; // reintento
-      }
-    };
-    void pedir();
-    const id = setInterval(() => {
-      const s = Math.ceil((vence - Date.now()) / 1000);
-      setRestante(Math.max(s, 0));
-      if (s <= 0) void pedir();
-    }, 1000);
-    return () => {
-      cancelado = true;
-      clearInterval(id);
-    };
-  }, [sesionId, activo]);
-
-  return { qr, restante };
-}
 
 export function SesionEnVivoPage() {
   const { id = '' } = useParams();
   const { data: s, recargar } = usePolling<SesionDetalle>(`/sesiones/${id}`);
   const [proyectando, setProyectando] = useState(false);
-  const { qr, restante } = useQrRotativo(id, s?.estado === 'ABIERTA');
+  const { data: qrData, restante } = useQrRotativo<QrAsistenciaResponse>(s?.estado === 'ABIERTA' ? `/sesiones/${id}/qr` : null);
+  const qr = qrData?.qr ?? null;
 
   const accion = useCallback(
     async (path: string, body: object = {}, metodo?: string) => {

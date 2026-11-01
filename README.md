@@ -2,7 +2,7 @@
 
 Prototipo para un trabajo práctico universitario: una app de identidad y presentismo estudiantil inspirada en POAP. El teléfono del estudiante funciona como credencial: valida su identidad (contra un mock de RENAPER), muestra un QR de identidad dinámico y escanea QRs para dar presente en el aula o registrar el ingreso a la sede. Cada presente válido genera una constancia firmada por el servidor (sin blockchain). Todos los servicios externos están mockeados.
 
-> Estado: **etapa 4** (sesiones, QR de asistencia y presente desde la app). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
+> Estado: **etapa 5** (ingreso a sede, constancias de presencia y reportes). Las secciones de demo, diagramas y seguridad se completan en las etapas siguientes.
 
 ## Arquitectura
 
@@ -106,6 +106,15 @@ Hay además 8 estudiantes ya validados, con dispositivo vinculado e historial de
 - **Orden de validación del presente:** firma del dispositivo, nonce, token del QR (vigente y de asistencia), sesión abierta y en horario, inscripción y, por último, sin duplicado (`@@unique(estudianteId, sesionId)`). Cada falla devuelve un `codigo` distinto (`QR_VENCIDO`, `SESION_CERRADA`, `NO_INSCRIPTO_CURSO`, `YA_PRESENTE`…) que la app muestra.
 - **Ventana de la sesión:** un presente por QR es válido si el docente abrió la sesión, no la cerró y `ahora ∈ [inicio − tolerancia, fin]`. Abrir y cerrar son acciones explícitas, y una sesión cerrada se puede reabrir.
 - **Exámenes:** el estudiante da presente con el QR del aula, y el docente escanea su credencial desde "Sesión en vivo" para marcar el presente como verificado presencialmente. Si el estudiante no dio presente, la verificación lo informa pero no lo crea. Los exámenes exigen esta verificación por defecto.
-- **Correcciones manuales:** marcar o anular un presente exige un motivo y queda en `Auditoria` con el estado anterior. Anular hoy borra la asistencia; en la etapa 5, cuando existan las constancias, la constancia va a quedar revocada.
+- **Correcciones manuales:** marcar o anular un presente exige un motivo y queda en `Auditoria` con el estado anterior. Al anular se borra la asistencia, pero su constancia no: queda revocada.
 - **La app decide a dónde mandar cada QR leyendo el `typ` del header**, sin verificarlo: la verificación siempre la hace el servidor.
+- **Constancias (estilo POAP, sin blockchain):** cada presente, sea QR o manual, emite una constancia con datos públicos (evento, curso, sede, aula, fecha y titular abreviado como "Camila F.", sin DNI ni legajo). El servidor la firma como JWS EdDSA y se guarda junto con su SHA-256. La verificación pública (`/verificar/:codigo`) comprueba la firma y que el contenido firmado coincida con lo guardado, así que una edición manual de la base se detecta. La clave pública está en `GET /public/clave-servidor` para verificarla por fuera.
+- **Constancia revocada en lugar de borrada:** si el docente anula el presente, el link público sigue respondiendo y muestra "revocada", y la constancia desaparece de la galería de la app. Por eso `Constancia.asistenciaId` es opcional (`onDelete: SetNull`) y la constancia guarda su propio `estudianteId`.
+- **Código público corto (`XXXX-XXXX`):** usa un alfabeto sin caracteres ambiguos (sin 0/O ni 1/I/L), así se puede dictar o tipear.
+- **QR de puerta:** el servidor firma un JWT `presente-puerta+jwt` con el `pid` del punto de acceso. Los **estáticos** (para imprimir) valen un año. Los **rotativos** (para una pantalla en la entrada) rotan cada 15 s y valen 30 s, igual que el de asistencia. El escaneo pasa por la misma firma del dispositivo y el mismo antirreplay que el presente.
+- **Ingreso o egreso automático:** el tipo se alterna según el último evento del día del estudiante, en cualquier sede: si el último fue un ingreso, el siguiente es un egreso. Escanear la misma puerta dentro de los 60 s siguientes se rechaza, para que un doble escaneo accidental no registre "entró y salió".
+- **Limitación conocida, QR de puerta impreso:** como no hay geolocalización, una foto del QR estático permite registrar un ingreso sin estar en la puerta. Igual tiene que hacerlo el teléfono vinculado del propio estudiante. Para puertas sensibles conviene el modo rotativo.
+- **Reportes:** el % de asistencia es presentes sobre inscriptos. El del dashboard toma las sesiones terminadas en los últimos 7 días; la grilla, las sesiones ya empezadas. Por eso las sesiones de hoy en curso aparecen con ausentes hasta que la gente da presente. Como los estudiantes del seed sin validar nunca dan presente, los porcentajes del seed son bajos a propósito.
+- **CSV de asistencia:** P = QR, M = manual, A = ausente. Incluye BOM UTF-8 para que Excel muestre bien los acentos.
+- **Página pública dentro del backoffice:** `/verificar/:codigo` se resuelve antes del login. La verificación de identidad del staff pasó a `/verificar-identidad` para no confundirse con ella.
 - **Tests:** dos proyectos de Vitest en la API. `unit` (`*.unit.test.ts`) no usa base de datos; `integration` resetea `test.db` y carga el seed.

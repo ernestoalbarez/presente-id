@@ -139,3 +139,59 @@ Authorization: Bearer {{registro.response.body.deviceToken}}
 Content-Type: application/json
 
 { "jws": "JWS_FIRMADO_POR_EL_TELEFONO" }
+
+### --- Constancias (públicas, sin login) ---------------------------------
+
+### Verificar una constancia por su código
+GET {{base}}/public/constancias/ABCD-EFGH
+
+### Clave pública del servidor (JWK) para verificar firmas por fuera
+GET {{base}}/public/clave-servidor
+
+### --- App: historial y constancias ---------------------------------------
+
+GET {{base}}/yo/historial
+Authorization: Bearer {{registro.response.body.deviceToken}}
+
+###
+GET {{base}}/yo/constancias
+Authorization: Bearer {{registro.response.body.deviceToken}}
+
+### --- Puertas e ingresos (directivo) --------------------------------------
+
+### Sedes con sus puertas
+# @name sedes
+GET {{base}}/sedes
+Authorization: Bearer {{login.response.body.token}}
+
+### QR de una puerta (estático: válido un año; rotativo: rota cada 15 s)
+GET {{base}}/puntos-acceso/{{sedes.response.body.0.puntos.0.id}}/qr
+Authorization: Bearer {{login.response.body.token}}
+
+### Crear puerta
+POST {{base}}/puntos-acceso
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "sedeId": "{{sedes.response.body.0.id}}", "nombre": "Puerta lateral", "modo": "ROTATIVO" }
+
+### Ingreso desde la app (JWS firmado por el teléfono, igual que el presente)
+POST {{base}}/ingresos/escaneo
+Authorization: Bearer {{registro.response.body.deviceToken}}
+Content-Type: application/json
+
+{ "jws": "JWS_FIRMADO_POR_EL_TELEFONO" }
+
+### --- Reportes -----------------------------------------------------------
+
+### Dashboard
+GET {{base}}/reportes/dashboard
+Authorization: Bearer {{login.response.body.token}}
+
+### Grilla de asistencia (agregar &formato=csv para descargar)
+GET {{base}}/reportes/asistencia?cursoId=ID_CURSO
+Authorization: Bearer {{login.response.body.token}}
+
+### Ingresos del día por sede y franja horaria (?fecha=YYYY-MM-DD&sedeId=)
+GET {{base}}/reportes/ingresos
+Authorization: Bearer {{login.response.body.token}}

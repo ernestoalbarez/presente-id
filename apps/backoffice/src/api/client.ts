@@ -40,3 +40,14 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   }
   return data as T;
 }
+
+/** Descarga un archivo de la API con el token de sesión (p. ej. el CSV de asistencia). */
+export async function descargar(path: string, nombre: string) {
+  const token = tokenStore.get();
+  const res = await fetch(`/api${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new ApiError(res.status, `Error ${res.status} al descargar`);
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: nombre });
+  a.click();
+  URL.revokeObjectURL(url);
+}

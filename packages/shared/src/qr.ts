@@ -12,6 +12,8 @@ export const TYP_ESCANEO = 'presente-escaneo+jws';
 /** `typ` de los QR que genera el servidor. La app lo lee del header para saber qué escaneó. */
 export const TYP_QR_ASISTENCIA = 'presente-asistencia+jwt';
 export const TYP_QR_PUERTA = 'presente-puerta+jwt';
+/** `typ` de la firma del servidor sobre una constancia de presencia. */
+export const TYP_CONSTANCIA = 'presente-constancia+jws';
 
 /** Payload del QR de identidad que muestra el estudiante. */
 export interface PayloadQrIdentidad {

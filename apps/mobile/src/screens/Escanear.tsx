@@ -1,4 +1,4 @@
-// Escaneo de QRs de asistencia (y, en la etapa 5, de ingreso a sede).
+// Escaneo de QRs de asistencia (aula) y de ingreso (puerta de la sede).
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -20,7 +20,7 @@ export function Escanear() {
     ocupado.current = true;
     setProcesando(true);
     const r = await procesarQr(contenido);
-    void Haptics.notificationAsync(r.tipo === 'PRESENTE' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error);
+    void Haptics.notificationAsync(r.tipo === 'ERROR' ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Success);
     setResultado(r);
     setProcesando(false);
   };
@@ -32,6 +32,18 @@ export function Escanear() {
   };
 
   if (resultado?.tipo === 'PRESENTE') return <PresenteOk r={resultado.presente} onOtro={otro} />;
+  if (resultado?.tipo === 'INGRESO') {
+    const i = resultado.ingreso;
+    return (
+      <Estado
+        icono={i.tipo === 'INGRESO' ? '🚪' : '👋'}
+        titulo={i.tipo === 'INGRESO' ? 'Ingreso registrado' : 'Egreso registrado'}
+        mensaje={`${i.sede} · ${i.punto} · ${new Date(i.timestamp).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`}
+      >
+        <Boton titulo="Listo" onPress={otro} />
+      </Estado>
+    );
+  }
   if (resultado?.tipo === 'ERROR') {
     return (
       <Estado icono="⚠️" titulo={resultado.titulo} mensaje={resultado.mensaje}>
@@ -45,7 +57,7 @@ export function Escanear() {
   return (
     <Pantalla>
       <Titulo>Escanear</Titulo>
-      <Texto suave>Apuntá al QR proyectado en el aula para dar presente.</Texto>
+      <Texto suave>Apuntá al QR del aula para dar presente, o al de la puerta para registrar tu ingreso.</Texto>
       {permiso.granted ? (
         <View style={s.marco}>
           <CameraView
@@ -88,6 +100,10 @@ function PresenteOk({ r, onOtro }: { r: Extract<ResultadoEscaneo, { tipo: 'PRESE
       <Texto suave>
         {r.aula} · {hora}
       </Texto>
+      <View style={s.constancia}>
+        <Text style={{ fontWeight: '700', color: colores.primario }}>🏅 Constancia emitida</Text>
+        <Text style={{ color: colores.suave }}>Código {r.constancia.codigo} · la encontrás en "Constancias"</Text>
+      </View>
       {r.requiereVerificacionIdentidad && (
         <Texto suave>Este examen requiere verificación de identidad: mostrale tu credencial al docente.</Texto>
       )}
@@ -97,6 +113,7 @@ function PresenteOk({ r, onOtro }: { r: Extract<ResultadoEscaneo, { tipo: 'PRESE
 }
 
 const s = StyleSheet.create({
+  constancia: { backgroundColor: colores.primarioClaro, borderRadius: 12, padding: 14, alignItems: 'center', gap: 4 },
   marco: { height: 340, borderRadius: 16, overflow: 'hidden', backgroundColor: '#000' },
   sello: {
     width: 140,

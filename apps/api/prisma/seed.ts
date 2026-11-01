@@ -1,10 +1,11 @@
 // Datos de demo. Las fechas se calculan relativas al momento en que corre el seed, así
 // siempre hay sesiones "de hoy" para la demo en vivo e historial para los reportes.
-// Las constancias de los presentes precargados se agregan en la etapa 5 (firma del servidor).
+// Cada presente precargado tiene su constancia firmada (necesita las claves de apps/api/.env).
 import { generateKeyPairSync } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import { emitirConstancia } from '../src/modules/constancias/service';
 
 export const PASSWORD_DEMO = 'demo1234';
 
@@ -174,7 +175,7 @@ export async function seed(prisma: PrismaClient, ahora = new Date()) {
     for (const [ai, a] of alumnos.entries()) {
       if ((ai + si) % 5 === 0) continue; // ausente
       const manual = (ai + si) % 7 === 0; // algunos cargados a mano por el docente
-      await prisma.asistencia.create({
+      const asistencia = await prisma.asistencia.create({
         data: {
           estudianteId: a.id,
           sesionId: sesion.id,
@@ -183,6 +184,7 @@ export async function seed(prisma: PrismaClient, ahora = new Date()) {
           registradaPorId: manual ? cursos.find((c) => c.codigo === s.curso)!.docenteId : null,
         },
       });
+      await emitirConstancia(prisma, asistencia.id);
     }
   }
 

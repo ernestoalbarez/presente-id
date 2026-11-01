@@ -6,9 +6,9 @@ import { useAuth } from '../auth/AuthContext';
 const MENU: Array<{ label: string; to?: string; roles: RolStaff[] }> = [
   { label: 'Dashboard', to: '/', roles: ['DOCENTE', 'DIRECTIVO'] },
   { label: 'Cursos', to: '/cursos', roles: ['DOCENTE', 'DIRECTIVO'] },
-  { label: 'Verificar identidad', to: '/verificar', roles: ['DOCENTE', 'DIRECTIVO'] },
-  { label: 'Asistencia', roles: ['DOCENTE', 'DIRECTIVO'] },
-  { label: 'Ingresos', roles: ['DIRECTIVO'] },
+  { label: 'Verificar identidad', to: '/verificar-identidad', roles: ['DOCENTE', 'DIRECTIVO'] },
+  { label: 'Asistencia', to: '/asistencia', roles: ['DOCENTE', 'DIRECTIVO'] },
+  { label: 'Ingresos', to: '/ingresos', roles: ['DIRECTIVO'] },
   { label: 'Dispositivos', to: '/dispositivos', roles: ['DIRECTIVO'] },
   { label: 'Validaciones', to: '/validaciones', roles: ['DIRECTIVO'] },
   { label: 'Auditoría', roles: ['DIRECTIVO'] },

@@ -1,15 +1,19 @@
-// Pantalla principal del estudiante validado: pestañas "Credencial" y "Escanear".
+// Pantalla principal del estudiante validado: credencial, escanear, historial y constancias.
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PerfilEstudiante } from '@presente/shared';
 import { colores } from '../components/ui';
+import { Constancias } from './Constancias';
 import { Escanear } from './Escanear';
+import { Historial } from './Historial';
 import { Inicio } from './Inicio';
 
 const PESTANIAS = [
   { id: 'credencial', label: 'Credencial', icono: '🪪' },
   { id: 'escanear', label: 'Escanear', icono: '📷' },
+  { id: 'historial', label: 'Historial', icono: '🕘' },
+  { id: 'constancias', label: 'Constancias', icono: '🏅' },
 ] as const;
 type Pestania = (typeof PESTANIAS)[number]['id'];
 
@@ -20,7 +24,10 @@ export function Principal({ perfil, onDesvincular }: { perfil: PerfilEstudiante;
   return (
     <View style={{ flex: 1, backgroundColor: colores.fondo }}>
       <View style={{ flex: 1 }}>
-        {pestania === 'credencial' ? <Inicio perfil={perfil} onDesvincular={onDesvincular} /> : <Escanear />}
+        {pestania === 'credencial' && <Inicio perfil={perfil} onDesvincular={onDesvincular} />}
+        {pestania === 'escanear' && <Escanear />}
+        {pestania === 'historial' && <Historial />}
+        {pestania === 'constancias' && <Constancias />}
       </View>
       <View style={[s.barra, { paddingBottom: Math.max(insets.bottom, 8) }]}>
         {PESTANIAS.map((p) => (

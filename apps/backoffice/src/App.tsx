@@ -2,15 +2,28 @@ import { Navigate, Route, Routes } from 'react-router';
 import { useAuth } from './auth/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { AsistenciaPage } from './pages/AsistenciaPage';
 import { CursoDetallePage } from './pages/CursoDetallePage';
 import { CursosPage } from './pages/CursosPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DispositivosPage } from './pages/DispositivosPage';
+import { IngresosPage } from './pages/IngresosPage';
 import { SesionEnVivoPage } from './pages/SesionEnVivoPage';
+import { VerificarConstanciaPage } from './pages/VerificarConstanciaPage';
 import { ValidacionesPage } from './pages/ValidacionesPage';
 import { VerificarIdentidadPage } from './pages/VerificarIdentidadPage';
 
 export function App() {
+  return (
+    <Routes>
+      {/* Pública: a esta página apunta el QR de cada constancia (no requiere login). */}
+      <Route path="/verificar/:codigo" element={<VerificarConstanciaPage />} />
+      <Route path="*" element={<Privado />} />
+    </Routes>
+  );
+}
+
+function Privado() {
   const { usuario, cargando } = useAuth();
   if (cargando) return <p className="p-8 text-slate-500">Cargando…</p>;
 
@@ -27,13 +40,15 @@ export function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/verificar" element={<VerificarIdentidadPage />} />
+        <Route path="/verificar-identidad" element={<VerificarIdentidadPage />} />
         <Route path="/cursos" element={<CursosPage />} />
         <Route path="/cursos/:id" element={<CursoDetallePage />} />
         <Route path="/sesiones/:id" element={<SesionEnVivoPage />} />
+        <Route path="/asistencia" element={<AsistenciaPage />} />
         {usuario.rol === 'DIRECTIVO' && (
           <>
             <Route path="/dispositivos" element={<DispositivosPage />} />
+            <Route path="/ingresos" element={<IngresosPage />} />
             <Route path="/validaciones" element={<ValidacionesPage />} />
           </>
         )}

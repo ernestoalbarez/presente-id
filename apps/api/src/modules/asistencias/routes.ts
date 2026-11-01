@@ -11,6 +11,7 @@ import { consumirNonce } from '../../lib/nonces';
 import { prisma } from '../../lib/prisma';
 import { verificarToken } from '../../lib/tokens';
 import { authDevice } from '../../middleware/authDevice';
+import { emitirConstancia, urlVerificacion } from '../constancias/service';
 import { evaluarSesion } from '../sesiones/reglas';
 
 export const asistenciasRouter = Router();
@@ -47,9 +48,13 @@ asistenciasRouter.post('/escaneo', authDevice(), async (req, res) => {
   if (!inscripto) throw new HttpError(403, `No estás inscripto en ${sesion.curso.nombre}`, 'NO_INSCRIPTO_CURSO');
 
   // 6. Sin duplicados: la restricción única (estudiante, sesión) lo garantiza.
+  //    El presente y su constancia se crean juntos (transacción).
   try {
-    const asistencia = await prisma.asistencia.create({
-      data: { estudianteId: estudiante.id, sesionId: sesion.id, metodo: 'QR', timestamp: clock.now() },
+    const { asistencia, constancia } = await prisma.$transaction(async (tx) => {
+      const asistencia = await tx.asistencia.create({
+        data: { estudianteId: estudiante.id, sesionId: sesion.id, metodo: 'QR', timestamp: clock.now() },
+      });
+      return { asistencia, constancia: await emitirConstancia(tx, asistencia.id) };
     });
     const body: PresenteResponse = {
       asistenciaId: asistencia.id,
@@ -58,6 +63,7 @@ asistenciasRouter.post('/escaneo', authDevice(), async (req, res) => {
       aula: sesion.aula,
       timestamp: asistencia.timestamp.toISOString(),
       requiereVerificacionIdentidad: sesion.requiereVerificacionIdentidad,
+      constancia: { codigo: constancia.codigo, urlVerificacion: urlVerificacion(constancia.codigo) },
     };
     res.status(201).json(body);
   } catch (e) {

@@ -1,6 +1,8 @@
 // Helpers de tests de integración: simulan lo que hacen la app (teléfono) y el backoffice.
 // Ojo: todos los archivos comparten la misma base (seed cargado una vez). registro.test.ts
 // espera que 44901231 y 44012342 lleguen sin teléfono: no usarlos en otras suites.
+// DNIs por suite: verificaciones 45123453 · asistencias 42567895, 42678906, 40234562, 40123451,
+// 41345673, 41456784 · constancias 43789017 · ingresos 43890128.
 import { randomBytes, randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { expect } from 'vitest';
@@ -58,5 +60,19 @@ export async function telefonoValidado(dni: string, sexo: 'M' | 'F') {
     firmarEscaneo: firmar,
     /** Escanea un QR de asistencia como lo hace la app. */
     escanearAsistencia: (qr: string, jws = firmar(qr)) => request(app).post('/asistencias/escaneo').set(dev).send({ jws }),
+    /** Escanea un QR de puerta como lo hace la app. */
+    escanearPuerta: (qr: string, jws = firmar(qr)) => request(app).post('/ingresos/escaneo').set(dev).send({ jws }),
+    /** GET autenticado como el teléfono. */
+    get: (path: string) => request(app).get(path).set(dev),
   };
+}
+
+/** Sesión de hoy (no terminada) del curso indicado, abierta y lista para escanear. */
+export async function sesionAbiertaDeHoy(auth: Auth, curso: string, tipo: 'CLASE' | 'EXAMEN' = 'CLASE') {
+  const lista = (await request(app).get('/sesiones').set(auth)).body as Array<{ id: string; curso: string; tipo: string; fin: string }>;
+  const s = lista.find((x) => x.curso === curso && x.tipo === tipo && new Date(x.fin) > new Date());
+  expect(s).toBeDefined();
+  await request(app).post(`/sesiones/${s!.id}/abrir`).set(auth).expect(200);
+  const qr = (await request(app).get(`/sesiones/${s!.id}/qr`).set(auth)).body.qr as string;
+  return { id: s!.id, qr };
 }

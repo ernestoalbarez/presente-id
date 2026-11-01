@@ -71,4 +71,6 @@ export interface PresenteResponse {
   aula: string;
   timestamp: string;
   requiereVerificacionIdentidad: boolean;
+  /** Constancia de presencia emitida para este presente. */
+  constancia: { codigo: string; urlVerificacion: string };
 }
