@@ -45,7 +45,9 @@ describe('presente por QR', () => {
   it('flujo completo: abrir, escanear, duplicado, replay y cierre', async () => {
     const docente = await login('docente1@presente.edu.ar');
     const sesion = await sesionDeHoy(docente, 'Programación II', 'CLASE');
-    expect((await request(app).get(`/sesiones/${sesion.id}/qr`).set(docente)).status).toBe(409); // todavía cerrada
+    // Otras suites pueden haberla abierto antes: la cerramos y el QR se niega.
+    await request(app).post(`/sesiones/${sesion.id}/cerrar`).set(docente).expect(200);
+    expect((await request(app).get(`/sesiones/${sesion.id}/qr`).set(docente)).status).toBe(409);
 
     await request(app).post(`/sesiones/${sesion.id}/abrir`).set(docente).expect(200);
     const qr = await qrDe(docente, sesion.id);

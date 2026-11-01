@@ -3,9 +3,11 @@ import { useAuth } from './auth/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { AsistenciaPage } from './pages/AsistenciaPage';
+import { AuditoriaPage } from './pages/AuditoriaPage';
 import { CursoDetallePage } from './pages/CursoDetallePage';
 import { CursosPage } from './pages/CursosPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { DemoPage } from './pages/DemoPage';
 import { DispositivosPage } from './pages/DispositivosPage';
 import { IngresosPage } from './pages/IngresosPage';
 import { SesionEnVivoPage } from './pages/SesionEnVivoPage';
@@ -45,10 +47,12 @@ function Privado() {
         <Route path="/cursos/:id" element={<CursoDetallePage />} />
         <Route path="/sesiones/:id" element={<SesionEnVivoPage />} />
         <Route path="/asistencia" element={<AsistenciaPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         {usuario.rol === 'DIRECTIVO' && (
           <>
             <Route path="/dispositivos" element={<DispositivosPage />} />
             <Route path="/ingresos" element={<IngresosPage />} />
+            <Route path="/auditoria" element={<AuditoriaPage />} />
             <Route path="/validaciones" element={<ValidacionesPage />} />
           </>
         )}

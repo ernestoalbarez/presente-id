@@ -195,3 +195,29 @@ Authorization: Bearer {{login.response.body.token}}
 ### Ingresos del día por sede y franja horaria (?fecha=YYYY-MM-DD&sedeId=)
 GET {{base}}/reportes/ingresos
 Authorization: Bearer {{login.response.body.token}}
+
+### --- Auditoría (directivo) ----------------------------------------------
+
+### Log unificado (?categoria=VERIFICACIONES|ASISTENCIA|DISPOSITIVOS|VALIDACIONES|SESIONES|DEMO)
+GET {{base}}/auditoria
+Authorization: Bearer {{login.response.body.token}}
+
+### --- Modo demo (solo con DEMO_MODE=true) --------------------------------
+
+### Estado del reloj
+GET {{base}}/demo/estado
+
+### Mover el reloj del servidor (desfase absoluto en minutos; 0 = hora real). Acepta token de staff o de dispositivo.
+POST {{base}}/demo/reloj
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "offsetMin": 2 }
+
+### Forzar una sesión como vencida
+POST {{base}}/demo/sesiones/{{sesiones.response.body.0.id}}/vencer
+Authorization: Bearer {{login.response.body.token}}
+
+### Desde la app: revocar el propio teléfono
+POST {{base}}/demo/mi-dispositivo/revocar
+Authorization: Bearer {{registro.response.body.deviceToken}}

@@ -2,7 +2,8 @@
 // Ojo: todos los archivos comparten la misma base (seed cargado una vez). registro.test.ts
 // espera que 44901231 y 44012342 lleguen sin teléfono: no usarlos en otras suites.
 // DNIs por suite: verificaciones 45123453 · asistencias 42567895, 42678906, 40234562, 40123451,
-// 41345673, 41456784 · constancias 43789017 · ingresos 43890128.
+// 41345673, 41456784 · constancias 43789017 · ingresos 43890128 · demo 45123453 (compartido
+// con verificaciones: ambas suites crean un teléfono nuevo en cada test, así que no se pisan).
 import { randomBytes, randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { expect } from 'vitest';
@@ -62,8 +63,9 @@ export async function telefonoValidado(dni: string, sexo: 'M' | 'F') {
     escanearAsistencia: (qr: string, jws = firmar(qr)) => request(app).post('/asistencias/escaneo').set(dev).send({ jws }),
     /** Escanea un QR de puerta como lo hace la app. */
     escanearPuerta: (qr: string, jws = firmar(qr)) => request(app).post('/ingresos/escaneo').set(dev).send({ jws }),
-    /** GET autenticado como el teléfono. */
+    /** GET / POST autenticados como el teléfono. */
     get: (path: string) => request(app).get(path).set(dev),
+    post: (path: string, body: object) => request(app).post(path).set(dev).send(body),
   };
 }
 

@@ -4,9 +4,11 @@ import { config } from './config';
 import { clock } from './lib/clock';
 import { errorHandler, HttpError } from './lib/errors';
 import { asistenciasRouter } from './modules/asistencias/routes';
+import { auditoriaRouter } from './modules/auditoria/routes';
 import { authRouter } from './modules/auth/routes';
 import { publicRouter } from './modules/constancias/routes';
 import { cursosRouter } from './modules/cursos/routes';
+import { demoRouter } from './modules/demo/routes';
 import { ingresosRouter, puertasRouter } from './modules/ingresos/routes';
 import { dispositivosRouter } from './modules/dispositivos/routes';
 import { registroRouter } from './modules/registro/routes';
@@ -22,7 +24,7 @@ export function createApp() {
   app.use(express.json({ limit: '5mb' }));
 
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, ahora: clock.now().toISOString(), demoMode: config.demoMode });
+    res.json({ ok: true, ahora: clock.now().toISOString(), demoMode: config.demoMode, offsetMin: Math.round(clock.getOffsetMs() / 60_000) });
   });
   app.use('/auth', authRouter);
   app.use('/public', publicRouter); // sin login: verificación de constancias
@@ -36,6 +38,8 @@ export function createApp() {
   app.use('/asistencias', asistenciasRouter);
   app.use('/ingresos', ingresosRouter);
   app.use('/reportes', reportesRouter);
+  app.use('/auditoria', auditoriaRouter);
+  app.use('/demo', demoRouter);
   app.use('/', puertasRouter); // GET /sedes, /puntos-acceso (directivo)
 
   app.use((_req, _res, next) => next(new HttpError(404, 'Ruta inexistente', 'NO_ENCONTRADO')));

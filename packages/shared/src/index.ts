@@ -10,3 +10,4 @@ export * from './qr';
 export * from './schemas/verificaciones';
 export * from './schemas/sesiones';
 export * from './schemas/reportes';
+export * from './schemas/auditoria';

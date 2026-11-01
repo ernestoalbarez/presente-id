@@ -1,21 +1,12 @@
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import type { PerfilEstudiante } from '@presente/shared';
 import { QrIdentidad } from '../components/QrIdentidad';
-import { Boton, colores, Pantalla, Texto } from '../components/ui';
+import { PanelDemo } from '../components/PanelDemo';
+import { colores, Pantalla, Texto } from '../components/ui';
 import { DEMO_MODE } from '../lib/config';
 
 /** "Mi credencial": datos del estudiante + QR de identidad dinámico para mostrar a un docente. */
 export function Inicio({ perfil, onDesvincular }: { perfil: PerfilEstudiante; onDesvincular: () => void }) {
-  const confirmarDesvincular = () =>
-    Alert.alert(
-      'Desvincular este teléfono',
-      'Se borran las claves de este teléfono. Al registrarte de nuevo, el sistema lo va a tratar como un dispositivo nuevo y un directivo tendrá que aprobar el cambio.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Desvincular', style: 'destructive', onPress: onDesvincular },
-      ],
-    );
-
   return (
     <Pantalla>
       <View style={s.tarjeta}>
@@ -37,7 +28,7 @@ export function Inicio({ perfil, onDesvincular }: { perfil: PerfilEstudiante; on
         <QrIdentidad usuarioId={perfil.usuarioId} />
       </View>
       <Texto suave>Mostrá este código al docente para verificar tu identidad.</Texto>
-      {DEMO_MODE && <Boton titulo="Desvincular este teléfono (demo)" variante="peligro" onPress={confirmarDesvincular} />}
+      {DEMO_MODE && <PanelDemo onDesvincular={onDesvincular} />}
     </Pantalla>
   );
 }

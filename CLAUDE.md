@@ -7,13 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Especificación completa: @docs/PROMPT.md
 
 ## Estado
-- Etapa actual: 5 terminada (ingreso a sede + constancias + reportes). Esperando confirmación para la etapa 6.
+- Etapa actual: 6 terminada (auditoría, modo demo, tests, README y diagramas). Las 6 etapas del prompt están completas.
 
 ## Comandos
 - `pnpm install && pnpm db:seed && pnpm dev`: API en :3000, backoffice en :5173, Metro en :8081.
 - `pnpm test` / `pnpm typecheck`. Un solo test: `pnpm --filter @presente/api test -- <patrón>`.
 - `pnpm keys:generate`: regenera el par Ed25519 del servidor en `apps/api/.env`.
-- Los tests de la API usan `apps/api/prisma/test.db` y claves efímeras (ver `apps/api/vitest.config.ts`). Los `*.unit.test.ts` no tocan la base: `pnpm --filter @presente/api exec vitest run --project unit`. Las suites de integración comparten una base seedeada una sola vez, así que cada suite tiene que usar DNIs distintos (ver `src/test/helpers.ts`).
+- Los tests de la API usan `apps/api/prisma/test.db` y claves efímeras (ver `apps/api/vitest.config.ts`). Los `*.unit.test.ts` no tocan la base: `pnpm --filter @presente/api exec vitest run --project unit`. Las suites de integración comparten una base seedeada una sola vez y corren en orden variable: cada suite usa DNIs distintos (ver `src/test/helpers.ts`) y no puede asumir el estado de las sesiones del seed (abrirlas o cerrarlas explícitamente).
 - App: `pnpm dev:mobile` (Expo Go, SDK 58). Para verificar que Metro bundlea sin un celular: `cd apps/mobile && CI=1 npx expo export --platform ios --output-dir /tmp/x`.
 - `pnpm db:seed` y el setup de tests usan `prisma db push --force-reset`, que Prisma bloquea cuando lo corre un agente: pedile al usuario que los ejecute.
 
@@ -30,6 +30,9 @@ Especificación completa: @docs/PROMPT.md
 - Constancias: `modules/constancias/service.ts`. Toda asistencia nueva (QR o manual, también en el seed) tiene que pasar por `emitirConstancia` dentro de la misma transacción, y al anular se usa `revocarConstanciaDe` (no se borran).
 - Routers montados en `/` (`registroRouter`, `puertasRouter`) no pueden usar `router.use(auth)`: aplicaría a cualquier URL. La auth va por ruta.
 - Backoffice: `/verificar/:codigo` es pública y se resuelve antes del login (`App.tsx`).
+- Auditoría: toda acción sensible nueva llama a `auditar()` con un `accion` que tiene que estar en `ACCIONES_AUDITORIA` (`packages/shared/src/schemas/auditoria.ts`) para tener categoría y etiqueta en el backoffice.
+- Modo demo: `modules/demo/routes.ts`. El desfase del reloj está en memoria (`lib/clock.ts`).
+- README: los diagramas Mermaid son parte de la entrega; si cambia un flujo, actualizar su diagrama.
 - Mobile: sin librería de navegación; `apps/mobile/src/App.tsx` es una máquina de estados guiada por `GET /yo` (`situacion`). La clave privada del dispositivo vive en SecureStore (`src/lib/dispositivo.ts`).
 
 ## Reglas de trabajo
