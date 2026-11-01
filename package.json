@@ -1,0 +1,13 @@
+{
+  "name": "presente-id",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "dev:mobile": "pnpm --filter @presente/mobile dev",
+    "db:seed": "pnpm --filter @presente/api db:seed",
+    "keys:generate": "pnpm --filter @presente/api keys:generate",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

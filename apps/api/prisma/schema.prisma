@@ -1,0 +1,256 @@
+// Modelo de datos completo de PresenteID.
+// SQLite no tiene enums nativos en Prisma: los campos "enum" son String y sus valores válidos
+// están definidos en packages/shared/src/types.ts (se validan con zod en la API).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Institucion {
+  id     String  @id @default(cuid())
+  nombre String
+  sedes  Sede[]
+}
+
+model Sede {
+  id            String        @id @default(cuid())
+  institucionId String
+  institucion   Institucion   @relation(fields: [institucionId], references: [id])
+  nombre        String
+  direccion     String
+  puntosAcceso  PuntoAcceso[]
+  cursos        Curso[]
+}
+
+/// Puerta o acceso de una sede. Su QR puede ser estático (impreso) o rotativo (pantalla).
+model PuntoAcceso {
+  id       String          @id @default(cuid())
+  sedeId   String
+  sede     Sede            @relation(fields: [sedeId], references: [id])
+  nombre   String
+  modo     String          @default("ESTATICO") // ESTATICO | ROTATIVO
+  activo   Boolean         @default(true)
+  eventos  EventoIngreso[]
+}
+
+/// Persona que usa el sistema. Staff (docente/directivo) entra con email + contraseña;
+/// los estudiantes no tienen credenciales web: se autentican con su dispositivo.
+model Usuario {
+  id           String   @id @default(cuid())
+  rol          String // ESTUDIANTE | DOCENTE | DIRECTIVO
+  nombre       String
+  apellido     String
+  email        String?  @unique
+  passwordHash String?
+  estado       String   @default("ACTIVO") // ACTIVO | INACTIVO
+  createdAt    DateTime @default(now())
+
+  estudiante                Estudiante?
+  dispositivos              Dispositivo[]
+  solicitudesCambio         SolicitudCambioDispositivo[] @relation("SolicitudUsuario")
+  solicitudesResueltas      SolicitudCambioDispositivo[] @relation("SolicitudResolutor")
+  validacionesResueltas     ValidacionIdentidad[]
+  cursosDictados            Curso[]
+  asistenciasRegistradas    Asistencia[]
+  verificacionesRealizadas  VerificacionIdentidad[]
+  auditorias                Auditoria[]
+}
+
+/// Padrón institucional: estudiantes inscriptos en la institución (los carga el seed).
+model Estudiante {
+  id               String   @id @default(cuid())
+  usuarioId        String   @unique
+  usuario          Usuario  @relation(fields: [usuarioId], references: [id])
+  dni              String   @unique
+  legajo           String   @unique
+  carrera          String
+  fotoUrl          String
+  estadoValidacion String   @default("PENDIENTE") // PENDIENTE | VALIDADO | RECHAZADO | EN_REVISION
+
+  validaciones   ValidacionIdentidad[]
+  inscripciones  Inscripcion[]
+  asistencias    Asistencia[]
+  ingresos       EventoIngreso[]
+  verificaciones VerificacionIdentidad[]
+}
+
+/// Padrón ficticio del mock de RENAPER (personas del "registro nacional").
+/// Está separado de Estudiante: alguien puede existir acá y no estar inscripto en la institución.
+model PersonaRenaper {
+  dni        String   @id
+  sexo       String // M | F | X
+  nroTramite String
+  nombre     String
+  apellido   String
+  fechaNac   DateTime
+  fotoUrl    String
+}
+
+/// Cada intento de validación de identidad contra el proveedor (mock RENAPER).
+model ValidacionIdentidad {
+  id            String      @id @default(cuid())
+  estudianteId  String?
+  estudiante    Estudiante? @relation(fields: [estudianteId], references: [id])
+  dni           String
+  dispositivoId String? // teléfono desde el que se intentó (queda PENDIENTE si va a revisión)
+  dispositivo   Dispositivo? @relation(fields: [dispositivoId], references: [id])
+  resultado     String // APROBADO | RECHAZADO | EN_REVISION
+  motivo        String?
+  resueltaPorId String?
+  resueltaPor   Usuario?    @relation(fields: [resueltaPorId], references: [id])
+  createdAt     DateTime    @default(now())
+  resueltaAt    DateTime?
+}
+
+/// Teléfono vinculado a un usuario. Regla: un único dispositivo ACTIVO por usuario.
+model Dispositivo {
+  id          String    @id @default(cuid())
+  usuarioId   String
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  deviceId    String    @unique
+  publicKey   String // Ed25519, 32 bytes en base64url
+  modelo      String?
+  estado      String    @default("PENDIENTE") // PENDIENTE | ACTIVO | REVOCADO
+  createdAt   DateTime  @default(now())
+  activadoAt  DateTime?
+  revocadoAt  DateTime?
+
+  solicitudesComoNuevo    SolicitudCambioDispositivo[] @relation("DispositivoNuevo")
+  solicitudesComoAnterior SolicitudCambioDispositivo[] @relation("DispositivoAnterior")
+  verificaciones          VerificacionIdentidad[]
+  validaciones            ValidacionIdentidad[]
+}
+
+model SolicitudCambioDispositivo {
+  id                    String       @id @default(cuid())
+  usuarioId             String
+  usuario               Usuario      @relation("SolicitudUsuario", fields: [usuarioId], references: [id])
+  dispositivoNuevoId    String
+  dispositivoNuevo      Dispositivo  @relation("DispositivoNuevo", fields: [dispositivoNuevoId], references: [id])
+  dispositivoAnteriorId String?
+  dispositivoAnterior   Dispositivo? @relation("DispositivoAnterior", fields: [dispositivoAnteriorId], references: [id])
+  estado                String       @default("PENDIENTE") // PENDIENTE | APROBADA | RECHAZADA
+  resueltaPorId         String?
+  resueltaPor           Usuario?     @relation("SolicitudResolutor", fields: [resueltaPorId], references: [id])
+  createdAt             DateTime     @default(now())
+  resueltaAt            DateTime?
+}
+
+model Curso {
+  id            String        @id @default(cuid())
+  nombre        String
+  codigo        String        @unique
+  docenteId     String
+  docente       Usuario       @relation(fields: [docenteId], references: [id])
+  sedeId        String
+  sede          Sede          @relation(fields: [sedeId], references: [id])
+  inscripciones Inscripcion[]
+  sesiones      Sesion[]
+}
+
+model Inscripcion {
+  id           String     @id @default(cuid())
+  estudianteId String
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id])
+  cursoId      String
+  curso        Curso      @relation(fields: [cursoId], references: [id])
+
+  @@unique([estudianteId, cursoId])
+}
+
+/// Clase o examen de un día puntual. Acepta presentes si está abierta y
+/// ahora ∈ [inicio − toleranciaMin, fin].
+model Sesion {
+  id                            String    @id @default(cuid())
+  cursoId                       String
+  curso                         Curso     @relation(fields: [cursoId], references: [id])
+  tipo                          String // CLASE | EXAMEN
+  inicio                        DateTime
+  fin                           DateTime
+  toleranciaMin                 Int       @default(15)
+  aula                          String
+  requiereVerificacionIdentidad Boolean   @default(false)
+  abiertaAt                     DateTime?
+  cerradaAt                     DateTime?
+
+  asistencias    Asistencia[]
+  verificaciones VerificacionIdentidad[]
+}
+
+model Asistencia {
+  id                        String     @id @default(cuid())
+  estudianteId              String
+  estudiante                Estudiante @relation(fields: [estudianteId], references: [id])
+  sesionId                  String
+  sesion                    Sesion     @relation(fields: [sesionId], references: [id])
+  timestamp                 DateTime   @default(now())
+  metodo                    String // QR | MANUAL
+  verificadaPresencialmente Boolean    @default(false)
+  registradaPorId           String? // docente que la cargó a mano (método MANUAL)
+  registradaPor             Usuario?   @relation(fields: [registradaPorId], references: [id])
+  constancia                Constancia?
+
+  // Un presente por estudiante y sesión: evita duplicados y replays.
+  @@unique([estudianteId, sesionId])
+}
+
+model EventoIngreso {
+  id            String      @id @default(cuid())
+  estudianteId  String
+  estudiante    Estudiante  @relation(fields: [estudianteId], references: [id])
+  puntoAccesoId String
+  puntoAcceso   PuntoAcceso @relation(fields: [puntoAccesoId], references: [id])
+  tipo          String // INGRESO | EGRESO
+  timestamp     DateTime    @default(now())
+}
+
+/// Constancia de presencia (inspirada en POAP), firmada por el servidor.
+model Constancia {
+  id           String     @id @default(cuid())
+  asistenciaId String     @unique
+  asistencia   Asistencia @relation(fields: [asistenciaId], references: [id])
+  codigo       String     @unique // código público corto para el link de verificación
+  payload      String // JSON canónico de lo que se firmó
+  hash         String // SHA-256 del payload
+  firma        String // firma Ed25519 del servidor sobre el payload
+  emitidaAt    DateTime   @default(now())
+  revocada     Boolean    @default(false)
+}
+
+/// Registro de cada escaneo de QR de identidad hecho desde el backoffice.
+model VerificacionIdentidad {
+  id            String       @id @default(cuid())
+  verificadorId String
+  verificador   Usuario      @relation(fields: [verificadorId], references: [id])
+  estudianteId  String?
+  estudiante    Estudiante?  @relation(fields: [estudianteId], references: [id])
+  dispositivoId String?
+  dispositivo   Dispositivo? @relation(fields: [dispositivoId], references: [id])
+  sesionId      String? // presente si se verificó dentro de un examen
+  sesion        Sesion?      @relation(fields: [sesionId], references: [id])
+  resultado     String // VALIDO | VENCIDO | INVALIDO | DISPOSITIVO_REVOCADO
+  motivo        String?
+  createdAt     DateTime     @default(now())
+}
+
+/// Nonces ya usados (QR de identidad y escaneos firmados). Antirreplay.
+model NonceUsado {
+  nonce    String   @id
+  expiraAt DateTime
+}
+
+model Auditoria {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     Usuario? @relation(fields: [actorId], references: [id])
+  accion    String
+  entidad   String
+  entidadId String?
+  detalle   String? // JSON
+  createdAt DateTime @default(now())
+}

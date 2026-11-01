@@ -1,0 +1,77 @@
+# Colección de requests de la API de PresenteID.
+# Uso: extensión "REST Client" de VS Code o el cliente HTTP de JetBrains.
+
+@base = http://localhost:3000
+
+### Health (incluye la hora del reloj del servidor y si DEMO_MODE está activo)
+GET {{base}}/health
+
+### Login backoffice (directivo)
+# @name login
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "directora@presente.edu.ar", "password": "demo1234" }
+
+### Usuario logueado
+GET {{base}}/auth/me
+Authorization: Bearer {{login.response.body.token}}
+
+### --- App móvil -------------------------------------------------------------
+
+### Registro (DNI aprobable del seed). Simula un teléfono: deviceId + clave pública Ed25519 (base64url, 43 caracteres).
+# @name registro
+POST {{base}}/registro
+Content-Type: application/json
+
+{
+  "dni": "44901231",
+  "sexo": "F",
+  "nroTramite": "00231449012",
+  "deviceId": "telefono-de-prueba-1",
+  "publicKey": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+  "modelo": "api.http"
+}
+
+### Perfil y situación del teléfono
+GET {{base}}/yo
+Authorization: Bearer {{registro.response.body.deviceToken}}
+
+### --- Directivo: validaciones y dispositivos -----------------------------
+
+### Validaciones en revisión manual
+GET {{base}}/validaciones
+Authorization: Bearer {{login.response.body.token}}
+
+### Aprobar una validación (reemplazar el id)
+POST {{base}}/validaciones/ID_VALIDACION/aprobar
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "motivo": "Revisado presencialmente" }
+
+### Rechazar una validación
+POST {{base}}/validaciones/ID_VALIDACION/rechazar
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "motivo": "La selfie no coincide con la foto del DNI" }
+
+### Solicitudes de cambio de dispositivo pendientes
+GET {{base}}/dispositivos/solicitudes
+Authorization: Bearer {{login.response.body.token}}
+
+### Aprobar / rechazar una solicitud
+POST {{base}}/dispositivos/solicitudes/ID_SOLICITUD/aprobar
+Authorization: Bearer {{login.response.body.token}}
+
+### Dispositivos activos
+GET {{base}}/dispositivos
+Authorization: Bearer {{login.response.body.token}}
+
+### Revocar un dispositivo
+POST {{base}}/dispositivos/ID_DISPOSITIVO/revocar
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{ "motivo": "Teléfono perdido" }

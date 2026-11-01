@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "PresenteID",
+    "slug": "presente-id",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "PresenteID usa la cámara para fotografiar tu DNI y escanear códigos QR.",
+        "NSFaceIDUsageDescription": "PresenteID usa Face ID para proteger tu credencial."
+      }
+    },
+    "android": {
+      "permissions": ["android.permission.CAMERA", "android.permission.USE_BIOMETRIC"]
+    }
+  }
+}
